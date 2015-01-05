@@ -9,8 +9,8 @@ class WebSocketEvent
   attr_accessor :type
   attr_accessor :content
 
-	def initialize(type, content=nil)
-		@type = type
-		@content = content
+  def initialize(type, content=nil)
+    @type = type
+    @content = content
   end
 end

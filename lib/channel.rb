@@ -9,9 +9,9 @@ class Channel
   attr_accessor :name
   attr_accessor :prev_id
 
-	def initialize(name, prev_id=nil)
-		@name = name
-		@prev_id = prev_id
+  def initialize(name, prev_id=nil)
+    @name = name
+    @prev_id = prev_id
   end
 end
 
