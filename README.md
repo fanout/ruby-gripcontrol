@@ -23,10 +23,10 @@ Usage
 ```Ruby
 require 'gripcontrol'
 
-# django: HttpResponse.new(http_body, content_type='application/grip-instruct')
 http_body = GripControl.create_hold_response('<channel>')
+# rails: HttpResponse.new(http_body, content_type='application/grip-instruct')
 grippubcontrol = GripPubControl.new('https://api.fanout.io/realm/<myrealm>')
 grippubcontrol.set_auth_jwt({'iss' => '<myrealm>'}, 
     Base64.decode64('<myrealmkey>'))
-grippubcontrol.publish_http_response('<channel>', 'Test publish!\n')
+grippubcontrol.publish_http_response('<channel>', 'Test publish!')
 ```
