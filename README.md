@@ -1,7 +1,7 @@
 ruby-gripcontrol
 ================
 
-Author: Konstantin Bokarius <bokarius@comcast.net>
+Author: Konstantin Bokarius <kon@fanout.io>
 
 A GRIP library for Ruby.
 
@@ -23,10 +23,9 @@ Usage
 ```Ruby
 require 'gripcontrol'
 
-http_body = GripControl.create_hold_response('<channel>')
-# rails: HttpResponse.new(http_body, content_type='application/grip-instruct')
-grippubcontrol = GripPubControl.new('https://api.fanout.io/realm/<myrealm>')
-grippubcontrol.set_auth_jwt({'iss' => '<myrealm>'}, 
-    Base64.decode64('<myrealmkey>'))
+grippubcontrol = GripPubControl.new({ 
+    'uri' => 'https://api.fanout.io/realm/<myrealm>',
+    'iss' => '<myrealm>'}
+    'key' => Base64.decode64('<myrealmkey>')})
 grippubcontrol.publish_http_response('<channel>', 'Test publish!')
 ```

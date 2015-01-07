@@ -7,12 +7,15 @@
 
 require 'base64'
 require 'jwt'
+require 'uri'
+require 'cgi'
 require_relative 'channel.rb'
 require_relative 'httpresponseformat.rb'
 require_relative 'httpstreamformat.rb'
 require_relative 'websocketmessageformat.rb'
 require_relative 'websocketevent.rb'
 require_relative 'grippubcontrol.rb'
+require_relative 'response.rb'
 
 class GripControl
   def self.create_hold(mode, channels, response)
@@ -54,9 +57,9 @@ class GripControl
       end
       if !response.body.nil?
         if response.body.encoding.name == 'ASCII-8BIT'
-          iresponse['body'] = response.body
-        else
           iresponse['body-bin'] = Base64.encode64(response.body)
+        else
+          iresponse['body'] = response.body
         end
       end
     end
@@ -68,30 +71,81 @@ class GripControl
     return instruct.to_json
   end
 
-  def self.create_hold_response(channels, response=nil)
-    return GripControl.create_hold('response', channels, response)
-  end
-
-  def self.create_hold_stream(channels, response=nil)
-    return create_hold('stream', channels, response)
+  def self.parse_grip_uri(uri)
+    uri = URI(uri)
+    params = CGI.parse(uri.query)
+    iss = nil
+    key = nil
+    if params.key?('iss')
+      iss = params['iss'][0]
+      params.delete('iss')
+    end
+    if params.key?('key')
+      key = params['key'][0]
+      params.delete('key')
+    end
+    if !key.nil? and key.start_with?('base64:')
+      key = Base64.decode64(key[7..-1])
+    end
+    qs = build_query_string(params)
+    path = uri.path
+    if path.end_with?('/')
+      path = path[0..-2]
+    end
+    control_uri = parsed.scheme + '://' + parsed.host + path
+    if !qs.nil? and !qs.empty?
+      control_uri += '?' + qs
+    end
+    out = {'control_uri' => control_uri}
+    if !iss.nil?
+      out['control_iss'] = iss
+    end
+    if !key.nil?
+      out['key'] = key
+    end
+    return out
   end
 
   def self.validate_sig(token, key)
     token = token.encode('utf-8')
     begin
-      claim = JWT.encode(claim, @auth_jwt_key).decode(token, key,
-          verify_expiration=false)
+      claim = JWT.decode(token, key, verify_expiration=false)
     rescue
       return false
     end
-    exp = claim.get('exp')
-    if !claim.has_key?('exp')
+    if !claim.key?('exp')
       return false
     end
     if Time.now.utc.to_i >= claim['exp']
       return false
     end
     return true
+  end
+
+  def self.create_grip_channel_header(channels)
+    if channels.is_a?(Channel)
+      channels = [channels]
+    elsif channels.is_a?(String)
+      channels = [Channel.new(channels)]
+    end
+    raise 'channels.length equal to 0' unless channels.length > 0
+    parts = []
+    channels.each do |channel|
+      s = channel.name
+      if !channel.prev_id.nil?
+        s += '; prev-id=%s' % [channel.prev_id]
+      end
+      parts.push(s)
+    end
+    return parts.join(', ')
+  end
+
+  def self.create_hold_response(channels, response=nil)
+    return GripControl.create_hold('response', channels, response)
+  end
+
+  def self.create_hold_stream(channels, response=nil)
+    return create_hold('stream', channels, response)
   end
 
   def self.decode_websocket_events(body)
@@ -123,7 +177,7 @@ class GripControl
     out = ''
     events.each do |event|
       if !event.content.nil?
-        out += '%s %x\r\n%s\r\n' % [e.type, len(event.content), event.content]
+        out += '%s %x\r\n%s\r\n' % [e.type, event.content.length, event.content]
       else
         out += '%s\r\n' % [e.type]
       end
@@ -133,7 +187,6 @@ class GripControl
 
   def self.websocket_control_message(type, args=nil)
     if !args.nil?
-      # REVIEW: is this deep copy workaround effective in this case?
       out = Marshal.load(Marshal.dump(args))
     else
       out = Hash.new
@@ -141,4 +194,15 @@ class GripControl
     out['type'] = type
     return out.to_json
   end
+
+  private
+
+  def build_query_string(params)
+    params.map do |name,values|
+      values.map do |value|
+        '#{CGI.escape name}=#{CGI.escape value}'
+      end
+    end.flatten.join('&')
+  end
+
 end

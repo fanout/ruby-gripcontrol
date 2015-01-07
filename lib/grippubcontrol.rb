@@ -8,8 +8,25 @@
 require 'pubcontrol'
 
 class GripPubControl < PubControl
+  alias super_add_client add_client
   alias super_publish publish
   alias super_publish_async publish_async
+
+  def apply_grip_config(config)
+    if !config.is_a?(Array)
+      config = [config]
+    end
+    config.each do |entry|
+      if !entry.key?('control_uri')
+        next
+      end
+      client = PubControlClient.new(entry['control_uri'])
+      if entry.key?('control_iss')
+        client.set_auth_jwt({'iss' => entry['control_iss']}, entry['key'])
+      end
+      super_add_client(client)
+    end
+  end
 
   def publish_http_response(channel, http_response, id=nil, prev_id=nil)
     if http_response.is_a?(String)
