@@ -22,9 +22,9 @@ class WebSocketMessageFormat < Format
   def export
     out = Hash.new
     if @content.encoding.name == 'ASCII-8BIT'
-      out['body-bin'] = Base64.encode64(@content)
+      out['content-bin'] = Base64.encode64(@content)
     else
-      out['body'] = @content
+      out['content'] = @content
     end
     return out
   end

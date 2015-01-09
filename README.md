@@ -20,6 +20,29 @@ gem install gripcontrol
 Usage
 -----
 
+Long polling instruction using the WEBrick gem:
+
+```Ruby
+require 'webrick'
+require 'gripcontrol'
+
+class GripHeadersResponse < WEBrick::HTTPServlet::AbstractServlet
+ def do_GET(request, response)
+   response.status = 200
+   response['Grip-Hold'] = 'response'
+   response['Grip-Channel'] = 
+       GripControl.create_grip_channel_header('<channel>')
+ end
+end
+
+server = WEBrick::HTTPServer.new(:Port => 80)
+server.mount "/", GripHeadersResponse
+trap "INT" do server.shutdown end
+server.start
+```
+
+Publishing:
+
 ```Ruby
 require 'gripcontrol'
 

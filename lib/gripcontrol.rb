@@ -87,7 +87,13 @@ class GripControl
     if !key.nil? and key.start_with?('base64:')
       key = Base64.decode64(key[7..-1])
     end
-    qs = build_query_string(params)
+    qs = []
+    params.map do |name,values|
+      values.map do |value|
+        qs.push('#{CGI.escape name}=#{CGI.escape value}')
+      end
+    end
+    qs = qs.join('&')
     path = uri.path
     if path.end_with?('/')
       path = path[0..-2]
@@ -109,14 +115,14 @@ class GripControl
   def self.validate_sig(token, key)
     token = token.encode('utf-8')
     begin
-      claim = JWT.decode(token, key, verify_expiration=false)
+      claim = JWT.decode(token, key, true, {verify_expiration: false})
     rescue
       return false
     end
-    if !claim.key?('exp')
+    if claim.length == 0 or !claim[0].key?('exp')
       return false
     end
-    if Time.now.utc.to_i >= claim['exp']
+    if Time.now.utc.to_i >= claim[0]['exp']
       return false
     end
     return true
@@ -152,23 +158,24 @@ class GripControl
     out = []
     start = 0
     while start < body.length do
-      at = body.index('\r\n', start)
+      at = body.index("\r\n", start)
       if !at.nil?
         raise 'bad format'
       end
       typeline = body[start..at - 1]
       start = at + 2
       at = typeline.index(' ')
+      event = nil
       if !at.nil?
         etype = typeline[0..at - 1]
         clen = ('0x' + typeline[at + 1..-1]).to_s(16)
         content = body[start:start + clen - 1]
         start += clen + 2
-        e = WebSocketEvent.new(etype, content)
+        event = WebSocketEvent.new(etype, content)
       else
-        e = WebSocketEvent.new(typeline)
+        event = WebSocketEvent.new(typeline)
       end
-      out.push(e)
+      out.push(event)
     end
     return out
   end
@@ -177,9 +184,10 @@ class GripControl
     out = ''
     events.each do |event|
       if !event.content.nil?
-        out += '%s %x\r\n%s\r\n' % [e.type, event.content.length, event.content]
+        out += "%s %x\r\n%s\r\n" % [event.type, event.content.length, 
+            event.content]
       else
-        out += '%s\r\n' % [e.type]
+        out += "%s\r\n" % [event.type]
       end
     end
     return out
@@ -194,15 +202,4 @@ class GripControl
     out['type'] = type
     return out.to_json
   end
-
-  private
-
-  def build_query_string(params)
-    params.map do |name,values|
-      values.map do |value|
-        '#{CGI.escape name}=#{CGI.escape value}'
-      end
-    end.flatten.join('&')
-  end
-
 end

@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'gripcontrol'
   s.version     = '0.2.0'
-  s.date        = '2015-01-07'
+  s.date        = '2015-01-08'
   s.summary     = 'GRIP library for Ruby'
   s.description = 'A Ruby convenience library for using the GRIP protocol'
   s.authors     = ['Konstantin Bokarius']
