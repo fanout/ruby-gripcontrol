@@ -98,7 +98,7 @@ class GripControl
     if path.end_with?('/')
       path = path[0..-2]
     end
-    control_uri = parsed.scheme + '://' + parsed.host + path
+    control_uri = uri.scheme + '://' + uri.host + path
     if !qs.nil? and !qs.empty?
       control_uri += '?' + qs
     end
@@ -159,7 +159,7 @@ class GripControl
     start = 0
     while start < body.length do
       at = body.index("\r\n", start)
-      if !at.nil?
+      if at.nil?
         raise 'bad format'
       end
       typeline = body[start..at - 1]
@@ -168,8 +168,8 @@ class GripControl
       event = nil
       if !at.nil?
         etype = typeline[0..at - 1]
-        clen = ('0x' + typeline[at + 1..-1]).to_s(16)
-        content = body[start:start + clen - 1]
+        clen = ('0x' + typeline[at + 1..-1]).to_i(16)
+        content = body[start..start + clen - 1]
         start += clen + 2
         event = WebSocketEvent.new(etype, content)
       else
