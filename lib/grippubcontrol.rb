@@ -12,6 +12,13 @@ class GripPubControl < PubControl
   alias super_publish publish
   alias super_publish_async publish_async
 
+  def initialize(config=nil)
+    @clients = Array.new
+    if !config.nil?
+      apply_grip_config(config)
+    end
+  end
+
   def apply_grip_config(config)
     if !config.is_a?(Array)
       config = [config]
