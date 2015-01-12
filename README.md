@@ -86,7 +86,7 @@ grippub.publish_http_stream_async('<channel>', 'Test async publish!')
 grippub.finish
 ```
 
-Parse the GRIP URI to extract the URI, ISS, and key values:
+Parse a GRIP URI to extract the URI, ISS, and key values:
 
 ```Ruby
 config = GripControl.parse_grip_uri(
@@ -98,4 +98,78 @@ Validate the Grip-Sig request header from incoming GRIP messages. This ensures t
 
 ```Ruby
 is_valid = GripControl.validate_sig(request['Grip-Sig'], '<key>')
+```
+
+WebSocket example using the WEBrick gem and WEBrick WebSocket extension. A client connects to a GRIP proxy via WebSockets and the proxy forward the request to the origin. The origin accepts the connection over a WebSocket
+
+```Ruby
+require 'webrick/websocket'
+require 'gripcontrol'
+require 'thread'
+
+class GripWebSocket < WEBrick::Websocket::Servlet
+  def socket_open(sock)
+    # Send a control message to subscribe the socket to a channel:
+    sock.puts('c:' + GripControl.websocket_control_message('subscribe',
+        {'channel' => '<channel>'}))
+    Thread.new { publish_messages }
+  end
+
+  def publish_messages
+    # Wait 3 seconds and then publish messages on the channel
+    # subscribed to above.
+    sleep(3)
+    ws_message = WebSocketMessageFormat.new('WebSocket test publish!')
+    grippub = GripPubControl.new({'control_uri' => '<myendpoint>'})
+    grippub.publish('<channel>', Item.new(ws_message))
+  end
+end
+
+server = WEBrick::Websocket::HTTPServer.new(Port: 80)
+server.mount "/websocket", GripWebSocket
+trap "INT" do server.shutdown end
+server.start
+```
+
+WebSocket over HTTP example using the WEBrick gem. In this case, a client connects to a GRIP proxy via WebSockets and the GRIP proxy communicates with the origin via HTTP.
+
+```Ruby
+require 'webrick'
+require 'gripcontrol'
+
+class GripWebSocketOverHttpResponse < WEBrick::HTTPServlet::AbstractServlet
+  def do_POST(request, response)
+    # Validate the Grip-Sig header:
+    if !GripControl.validate_sig(request['Grip-Sig'], '<key>')
+      return
+    end
+
+    # Decode and display the incoming WebSocket events:
+    events = GripControl.decode_websocket_events(request.body)
+    events.each do |event|
+      if event.content.nil?
+        puts 'Received event ' + event.type
+      else
+        puts 'Received event ' + event.type + ' with content: ' + 
+            event.content
+      end
+    end
+
+    response.status = 200
+    response['Content-Type'] = 'application/websocket-events'
+
+    # Respond with an OPEN, TEXT, and CLOSE event to the client.
+    events = []
+    events.push(WebSocketEvent.new('OPEN'))
+    events.push(WebSocketEvent.new('TEXT', 
+        'WebSocket over HTTP test publish!))
+    events.push(WebSocketEvent.new('CLOSE'))
+    response.body = GripControl.encode_websocket_events(events)
+  end
+end
+
+server = WEBrick::HTTPServer.new(Port: 80)
+server.mount "/websocket", GripWebSocketOverHttpResponse
+trap "INT" do server.shutdown end
+server.start
 ```
