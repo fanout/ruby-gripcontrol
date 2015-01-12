@@ -182,7 +182,7 @@ class GripWebSocketOverHttpResponse < WEBrick::HTTPServlet::AbstractServlet
           GripControl.websocket_control_message('subscribe',
           {'channel' => '<channel>'})))
       response.body = GripControl.encode_websocket_events(out_events)
-      Thread.new { send_message }
+      Thread.new { publish_message }
     end
   end
 
