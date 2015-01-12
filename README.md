@@ -20,7 +20,7 @@ gem install gripcontrol
 Usage
 -----
 
-Publishing:
+Examples for how to publish HTTP response and HTTP stream messages to GRIP proxy endpoints via the GripPubControl class.
 
 ```Ruby
 require 'gripcontrol'
