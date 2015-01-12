@@ -50,7 +50,7 @@ grippub.apply_grip_config([{'control_uri' => '<myendpoint_uri_1>'},
 grippub.remove_all_clients
 
 # Explicitly add an endpoint as a PubControlClient instance:
-pubclient = PubControlClient.new('<myendpoint_uri'>)
+pubclient = PubControlClient.new('<myendpoint_uri>')
 # Optionally set JWT auth: pubclient.set_auth_jwt('<claim>', '<key>')
 # Optionally set basic auth: pubclient.set_auth_basic('<user>', '<password>')
 grippub.add_client(pubclient)
