@@ -188,7 +188,7 @@ trap "INT" do server.shutdown end
 server.start
 ```
 
-Parse a GRIP URI to extract the URI, ISS, and key values:
+Parse a GRIP URI to extract the URI, ISS, and key values. The values will be returned in a hash containing 'control_uri', 'control_iss', and 'key' keys.
 
 ```Ruby
 config = GripControl.parse_grip_uri(
