@@ -167,15 +167,17 @@ class GripWebSocketOverHttpResponse < WEBrick::HTTPServlet::AbstractServlet
       end
     end
 
+    # Set the headers required by the GRIP proxy:
     response.status = 200
+    response['Sec-WebSocket-Extensions'] = 'grip; message-prefix=""'
     response['Content-Type'] = 'application/websocket-events'
 
-    # Respond with an OPEN, TEXT, and CLOSE event to the client:
+    # Open the WebSocket and subscribe it to a channel:
     events = []
     events.push(WebSocketEvent.new('OPEN'))
-    events.push(WebSocketEvent.new('TEXT', 
-        'WebSocket over HTTP test publish!))
-    events.push(WebSocketEvent.new('CLOSE'))
+    events.push(WebSocketEvent.new('TEXT', 'c:' +
+        GripControl.websocket_control_message('subscribe',
+        {'channel' => '<channel>'})))
     response.body = GripControl.encode_websocket_events(events)
   end
 end
