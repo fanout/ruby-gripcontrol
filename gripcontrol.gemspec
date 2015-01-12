@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'gripcontrol'
   s.version     = '1.0.0'
-  s.date        = '2015-01-10'
+  s.date        = '2015-01-11'
   s.summary     = 'GRIP library for Ruby'
   s.description = 'A Ruby convenience library for using the GRIP protocol'
   s.authors     = ['Konstantin Bokarius']
@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.files       = ['lib/gripcontrol.rb', 'lib/websocketmessageformat.rb',
       'lib/websocketevent.rb', 'lib/httpstreamformat.rb', 'lib/channel.rb',
       'lib/httpresponseformat.rb', 'lib/grippubcontrol.rb', 'lib/response.rb']
-  s.homepage    = 'http://rubygems.org/gems/gripcontrol'
+  s.homepage    = 'https://github.com/fanout/ruby-gripcontrol'
   s.license     = 'MIT'
   s.required_ruby_version = '>= 1.9.0'
   s.add_runtime_dependency 'pubcontrol', '~> 1'

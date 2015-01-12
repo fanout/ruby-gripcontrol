@@ -65,7 +65,7 @@ grippub.publish_http_stream_async('<channel>', 'Test async publish!')
 grippub.finish
 ```
 
-Long polling example via response headers using the WEBrick gem. The client connects to a GRIP proxy over HTTP and the proxy forwards the request to the origin. The origin subscribes the client to a channel and instructs it to long poll via the response headers.
+Long polling example via response _headers_ using the WEBrick gem. The client connects to a GRIP proxy over HTTP and the proxy forwards the request to the origin. The origin subscribes the client to a channel and instructs it to long poll via the response _headers_.
 
 ```Ruby
 require 'webrick'
@@ -86,7 +86,7 @@ trap "INT" do server.shutdown end
 server.start
 ```
 
-Long polling example via response body using the WEBrick gem. The client connects to a GRIP proxy over HTTP and the proxy forwards the request to the origin. The origin subscribes the client to a channel and instructs it to long poll via the response body.
+Long polling example via response _body_ using the WEBrick gem. The client connects to a GRIP proxy over HTTP and the proxy forwards the request to the origin. The origin subscribes the client to a channel and instructs it to long poll via the response _body_.
 
 ```Ruby
 require 'webrick'
@@ -119,7 +119,7 @@ Validate the Grip-Sig request header from incoming GRIP messages. This ensures t
 is_valid = GripControl.validate_sig(request['Grip-Sig'], '<key>')
 ```
 
-WebSocket example using the WEBrick gem and WEBrick WebSocket extension. A client connects to a GRIP proxy via WebSockets and the proxy forward the request to the origin. The origin accepts the connection over a WebSocket
+WebSocket example using the WEBrick gem and WEBrick WebSocket gem extension. A client connects to a GRIP proxy via WebSockets and the proxy forward the request to the origin. The origin accepts the connection over a WebSocket and responds with a control message indicating that the client should be subscribed to a channel. Note that in order for the GRIP proxy to properly interpret the control messages, the origin must provide a 'grip' extension in the 'Sec-WebSocket-Extensions' header. This is accomplished in the WEBrick WebSocket gem extension by adding the following line to lib/webrick/websocket/server.rb and rebuilding the gem: res['Sec-WebSocket-Extensions'] = 'grip; message-prefix=""'
 
 ```Ruby
 require 'webrick/websocket'
@@ -128,19 +128,8 @@ require 'thread'
 
 class GripWebSocket < WEBrick::Websocket::Servlet
   def socket_open(sock)
-    # Send a control message to subscribe the socket to a channel:
     sock.puts('c:' + GripControl.websocket_control_message('subscribe',
         {'channel' => '<channel>'}))
-    Thread.new { publish_messages }
-  end
-
-  def publish_messages
-    # Wait 3 seconds and then publish messages on the channel
-    # subscribed to above.
-    sleep(3)
-    ws_message = WebSocketMessageFormat.new('WebSocket test publish!')
-    grippub = GripPubControl.new({'control_uri' => '<myendpoint>'})
-    grippub.publish('<channel>', Item.new(ws_message))
   end
 end
 
