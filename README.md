@@ -43,8 +43,8 @@ grippub = GripPubControl.new({
     'key' => Base64.decode64('<myrealmkey>')})
 
 # Add new endpoints by applying an endpoint configuration:
-grippub.apply_grip_config([{'uri' => '<myendpoint_uri_1>'}, 
-    {'uri' => '<myendpoint_uri_2>'}])
+grippub.apply_grip_config([{'control_uri' => '<myendpoint_uri_1>'}, 
+    {'control_uri' => '<myendpoint_uri_2>'}])
 
 # Remove all configured endpoints:
 grippub.remove_all_clients
@@ -57,9 +57,11 @@ grippub.add_client(pubclient)
 
 # Publish across all configured endpoints:
 grippub.publish_http_response('<channel>', 'Test publish!')
-grippub.publish_http_response_async('<channel>', 'Test async publish!')
+grippub.publish_http_response_async('<channel>', 'Test async publish!',
+    method(:callback))
 grippub.publish_http_stream('<channel>', 'Test publish!')
-grippub.publish_http_stream_async('<channel>', 'Test async publish!')
+grippub.publish_http_stream_async('<channel>', 'Test async publish!',
+    method(:callback))
 
 # Wait for all async publish calls to complete:
 grippub.finish
@@ -132,8 +134,18 @@ require 'thread'
 
 class GripWebSocket < WEBrick::Websocket::Servlet
   def socket_open(sock)
+    # Subscribe the WebSocket to a channel:
     sock.puts('c:' + GripControl.websocket_control_message('subscribe',
         {'channel' => '<channel>'}))
+    Thread.new { publish_message }
+  end
+
+  def publish_message
+    # Wait and then publish a message to the subscribed channel:
+    sleep(3)
+    grippub = GripPubControl.new({'control_uri' => '<myendpoint>'})
+    grippub.publish('<channel>', Item.new(
+        WebSocketMessageFormat.new('Test WebSocket publish!!')))
   end
 end
 
@@ -156,29 +168,30 @@ class GripWebSocketOverHttpResponse < WEBrick::HTTPServlet::AbstractServlet
       return
     end
 
-    # Decode and display the incoming WebSocket events:
-    events = GripControl.decode_websocket_events(request.body)
-    events.each do |event|
-      if event.content.nil?
-        puts 'Received event ' + event.type
-      else
-        puts 'Received event ' + event.type + ' with content: ' + 
-            event.content
-      end
-    end
-
     # Set the headers required by the GRIP proxy:
     response.status = 200
     response['Sec-WebSocket-Extensions'] = 'grip; message-prefix=""'
     response['Content-Type'] = 'application/websocket-events'
 
-    # Open the WebSocket and subscribe it to a channel:
-    events = []
-    events.push(WebSocketEvent.new('OPEN'))
-    events.push(WebSocketEvent.new('TEXT', 'c:' +
-        GripControl.websocket_control_message('subscribe',
-        {'channel' => '<channel>'})))
-    response.body = GripControl.encode_websocket_events(events)
+    in_events = GripControl.decode_websocket_events(request.body)
+    if in_events[0].type == 'OPEN'
+      # Open the WebSocket and subscribe it to a channel:
+      out_events = []
+      out_events.push(WebSocketEvent.new('OPEN'))
+      out_events.push(WebSocketEvent.new('TEXT', 'c:' +
+          GripControl.websocket_control_message('subscribe',
+          {'channel' => '<channel>'})))
+      response.body = GripControl.encode_websocket_events(out_events)
+      Thread.new { send_message }
+    end
+  end
+
+  def publish_message
+    # Wait and then publish a message to the subscribed channel:
+    sleep(3)
+    grippub = GripPubControl.new({'control_uri' => '<myendpoint>'})
+    grippub.publish('<channel>', Item.new(
+        WebSocketMessageFormat.new('Test WebSocket publish!!')))
   end
 end
 
