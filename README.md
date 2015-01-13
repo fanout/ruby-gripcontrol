@@ -39,7 +39,7 @@ end
 
 grippub = GripPubControl.new({ 
     'control_uri' => 'https://api.fanout.io/realm/<myrealm>',
-    'control_iss' => '<myrealm>'}
+    'control_iss' => '<myrealm>',
     'key' => Base64.decode64('<myrealmkey>')})
 
 # Add new endpoints by applying an endpoint configuration:
@@ -106,7 +106,7 @@ Long polling example via response _body_ using the WEBrick gem. The client conne
 require 'webrick'
 require 'gripcontrol'
 
-class GripHeadersResponse < WEBrick::HTTPServlet::AbstractServlet
+class GripBodyResponse < WEBrick::HTTPServlet::AbstractServlet
   def do_GET(request, response)
     # Validate the Grip-Sig header:
     if !GripControl.validate_sig(request['Grip-Sig'], '<key>')
@@ -115,12 +115,13 @@ class GripHeadersResponse < WEBrick::HTTPServlet::AbstractServlet
 
     # Instruct the client to long poll via the response body:
     response.status = 200
+    response['Content-Type'] = 'application/grip-instruct'
     response.body = GripControl.create_hold_response('<channel>')
   end
 end
 
 server = WEBrick::HTTPServer.new(:Port => 80)
-server.mount "/", GripHeadersResponse
+server.mount "/", GripBodyResponse
 trap "INT" do server.shutdown end
 server.start
 ```
@@ -205,6 +206,6 @@ Parse a GRIP URI to extract the URI, ISS, and key values. The values will be ret
 
 ```Ruby
 config = GripControl.parse_grip_uri(
-    'http://api.fanout.io/realm/<myrealm>?iss=<myrealm>' 
+    'http://api.fanout.io/realm/<myrealm>?iss=<myrealm>' +
     '&key=base64:<myrealmkey>')
 ```
