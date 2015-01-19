@@ -58,10 +58,10 @@ grippub.add_client(pubclient)
 # Publish across all configured endpoints:
 grippub.publish_http_response('<channel>', 'Test publish!')
 grippub.publish_http_response_async('<channel>', 'Test async publish!',
-    method(:callback))
+    nil, nil, method(:callback))
 grippub.publish_http_stream('<channel>', 'Test publish!')
 grippub.publish_http_stream_async('<channel>', 'Test async publish!',
-    method(:callback))
+    nil, nil, method(:callback))
 
 # Wait for all async publish calls to complete:
 grippub.finish
