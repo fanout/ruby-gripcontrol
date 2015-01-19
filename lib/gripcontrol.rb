@@ -100,7 +100,7 @@ class GripControl
     end
     port = ''
     if uri.port != 80
-      port = ':' + uri.port
+      port = ':' + uri.port.to_s
     end
     control_uri = uri.scheme + '://' + uri.host + port + path
     if !qs.nil? and !qs.empty?

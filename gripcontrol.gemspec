@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'gripcontrol'
-  s.version     = '1.0.1'
+  s.version     = '1.0.2'
   s.date        = '2015-01-18'
   s.summary     = 'GRIP library for Ruby'
   s.description = 'A Ruby convenience library for using the GRIP protocol'
