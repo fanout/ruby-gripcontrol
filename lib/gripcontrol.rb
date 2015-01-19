@@ -98,7 +98,11 @@ class GripControl
     if path.end_with?('/')
       path = path[0..-2]
     end
-    control_uri = uri.scheme + '://' + uri.host + path
+    port = ''
+    if uri.port != 80
+      port = ':' + uri.port
+    end
+    control_uri = uri.scheme + '://' + uri.host + port + path
     if !qs.nil? and !qs.empty?
       control_uri += '?' + qs
     end

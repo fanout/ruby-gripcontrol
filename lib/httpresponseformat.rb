@@ -37,7 +37,6 @@ class HttpResponseFormat < Format
       out['headers'] = @headers
     end
     if !@body.nil?
-      # REVIEW is this the right way to check for binary encoding?
       if @body.encoding.name == 'ASCII-8BIT'
         out['body-bin'] = Base64.encode64(@body)
       else
