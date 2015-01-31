@@ -18,7 +18,7 @@ require_relative 'grippubcontrol.rb'
 require_relative 'response.rb'
 
 class GripControl
-  def self.create_hold(mode, channels, response)
+  def self.create_hold(mode, channels, response, timeout=nil)
     hold = Hash.new
     hold['mode'] = mode
     if channels.is_a?(Channel)
@@ -40,6 +40,9 @@ class GripControl
       ichannels.push(ichannel)
     end
     hold['channels'] = ichannels
+    if !timeout.nil?
+      hold['timeout'] = timeout
+    end
     iresponse = nil
     if !response.nil?
       if response.is_a?(String)
@@ -150,8 +153,8 @@ class GripControl
     return parts.join(', ')
   end
 
-  def self.create_hold_response(channels, response=nil)
-    return GripControl.create_hold('response', channels, response)
+  def self.create_hold_response(channels, response=nil, timeout=nil)
+    return GripControl.create_hold('response', channels, response, timeout)
   end
 
   def self.create_hold_stream(channels, response=nil)

@@ -51,7 +51,7 @@ grippub.remove_all_clients
 
 # Explicitly add an endpoint as a PubControlClient instance:
 pubclient = PubControlClient.new('<myendpoint_uri>')
-# Optionally set JWT auth: pubclient.set_auth_jwt('<claim>', '<key>')
+# Optionally set JWT auth: pubclient.set_auth_jwt(<claim>, '<key>')
 # Optionally set basic auth: pubclient.set_auth_basic('<user>', '<password>')
 grippub.add_client(pubclient)
 
@@ -91,6 +91,8 @@ class GripHeadersResponse < WEBrick::HTTPServlet::AbstractServlet
     response['Grip-Hold'] = 'response'
     response['Grip-Channel'] = 
         GripControl.create_grip_channel_header('<channel>')
+    # To optionally set a timeout value in seconds:
+    # response['Grip-Timeout'] = <timeout_value>
   end
 end
 
@@ -117,6 +119,9 @@ class GripBodyResponse < WEBrick::HTTPServlet::AbstractServlet
     response.status = 200
     response['Content-Type'] = 'application/grip-instruct'
     response.body = GripControl.create_hold_response('<channel>')
+    # To optionally set a timeout value in seconds:
+    # response.body = GripControl.create_hold_response(
+    #     '<channel>', nil, <timeout_value>)
   end
 end
 
