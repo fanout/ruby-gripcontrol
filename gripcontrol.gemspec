@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'gripcontrol'
-  s.version     = '1.1.0'
-  s.date        = '2015-01-31'
+  s.version     = '1.1.1'
+  s.date        = '2015-02-01'
   s.summary     = 'GRIP library for Ruby'
   s.description = 'A Ruby convenience library for using the GRIP protocol'
   s.authors     = ['Konstantin Bokarius']
@@ -13,5 +13,5 @@ Gem::Specification.new do |s|
   s.license     = 'MIT'
   s.required_ruby_version = '>= 1.9.0'
   s.add_runtime_dependency 'pubcontrol', '~> 1'
-  s.add_runtime_dependency 'jwt', '= 1.2.0'
+  s.add_runtime_dependency 'jwt', '~> 1.2'
 end
