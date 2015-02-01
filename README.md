@@ -119,7 +119,7 @@ class GripBodyResponse < WEBrick::HTTPServlet::AbstractServlet
     response.status = 200
     response['Content-Type'] = 'application/grip-instruct'
     response.body = GripControl.create_hold_response('<channel>')
-    # To optionally set a timeout value in seconds:
+    # Or to optionally set a timeout value in seconds:
     # response.body = GripControl.create_hold_response(
     #     '<channel>', nil, <timeout_value>)
   end
