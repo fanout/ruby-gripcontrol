@@ -11,8 +11,9 @@ require 'pubcontrol'
 class WebSocketMessageFormat < Format
   attr_accessor :content
 
-  def initialize(content)
+  def initialize(content, binary=false)
     @content = content
+    @binary = binary
   end
 
   def name
@@ -21,7 +22,7 @@ class WebSocketMessageFormat < Format
 
   def export
     out = Hash.new
-    if @content.encoding.name == 'ASCII-8BIT'
+    if @binary
       out['content-bin'] = Base64.encode64(@content)
     else
       out['content'] = @content
