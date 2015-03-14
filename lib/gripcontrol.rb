@@ -21,51 +21,13 @@ class GripControl
   def self.create_hold(mode, channels, response, timeout=nil)
     hold = Hash.new
     hold['mode'] = mode
-    if channels.is_a?(Channel)
-      channels = [channels]
-    elsif channels.is_a?(String)
-      channels = [Channel.new(channels)]
-    end
-    raise 'channels.length equal to 0' unless channels.length > 0
-    ichannels = []
-    channels.each do |channel|
-      if channel.is_a?(String)
-        channel = Channel(channel)
-      end
-      ichannel = Hash.new
-      ichannel['name'] = channel.name
-      if !channel.prev_id.nil?
-        ichannel['prev-id'] = channel.prev_id
-      end
-      ichannels.push(ichannel)
-    end
+    channels = GripControl.parse_channels(channels)
+    ichannels = GripControl.format_channels(channels)
     hold['channels'] = ichannels
     if !timeout.nil?
       hold['timeout'] = timeout
     end
-    iresponse = nil
-    if !response.nil?
-      if response.is_a?(String)
-        response = Response(nil, nil, nil, response)
-      end
-      iresponse = Hash.new
-      if !response.code.nil?
-        iresponse['code'] = response.code
-      end
-      if !response.reason.nil?
-        iresponse['reason'] = response.reason
-      end
-      if !response.headers.nil? and response.headers.length > 0
-        iresponse['headers'] = response.headers
-      end
-      if !response.body.nil?
-        if response.body.encoding.name == 'ASCII-8BIT'
-          iresponse['body-bin'] = Base64.encode64(response.body)
-        else
-          iresponse['body'] = response.body
-        end
-      end
-    end
+    iresponse = GripControl.get_hold_response(response)
     instruct = Hash.new
     instruct['hold'] = hold
     if !iresponse.nil?
@@ -76,7 +38,10 @@ class GripControl
 
   def self.parse_grip_uri(uri)
     uri = URI(uri)
-    params = CGI.parse(uri.query)
+    params = {}
+    if (uri.query)
+        params = CGI.parse(uri.query)
+    end
     iss = nil
     key = nil
     if params.key?('iss')
@@ -93,7 +58,7 @@ class GripControl
     qs = []
     params.map do |name,values|
       values.map do |value|
-        qs.push('#{CGI.escape name}=#{CGI.escape value}')
+        qs.push("#{CGI.escape name}=#{CGI.escape value}")
       end
     end
     qs = qs.join('&')
@@ -136,12 +101,7 @@ class GripControl
   end
 
   def self.create_grip_channel_header(channels)
-    if channels.is_a?(Channel)
-      channels = [channels]
-    elsif channels.is_a?(String)
-      channels = [Channel.new(channels)]
-    end
-    raise 'channels.length equal to 0' unless channels.length > 0
+    channel = format_channels(channels)
     parts = []
     channels.each do |channel|
       s = channel.name
@@ -208,5 +168,60 @@ class GripControl
     end
     out['type'] = type
     return out.to_json
+  end
+
+  private
+
+  def self.parse_channels(channels)
+    if channels.is_a?(Channel)
+      channels = [channels]
+    elsif channels.is_a?(String)
+      channels = [Channel.new(channels)]
+    end
+    return channels
+  end
+
+  def self.format_channels(channels)
+    ichannels = []
+    channels.each do |channel|
+      if channel.is_a?(String)
+        channel = Channel(channel)
+      end
+      ichannel = Hash.new
+      ichannel['name'] = channel.name
+      if !channel.prev_id.nil?
+        ichannel['prev-id'] = channel.prev_id
+      end
+      ichannels.push(ichannel)
+    end
+    raise 'channels.length equal to 0' unless channels.length > 0
+    return ichannels
+  end
+
+  def self.get_hold_response(response)
+    iresponse = nil
+    if !response.nil?
+      if response.is_a?(String)
+        response = Response.new(nil, nil, nil, response)
+      end
+      iresponse = Hash.new
+      if !response.code.nil?
+        iresponse['code'] = response.code
+      end
+      if !response.reason.nil?
+        iresponse['reason'] = response.reason
+      end
+      if !response.headers.nil? and response.headers.length > 0
+        iresponse['headers'] = response.headers
+      end
+      if !response.body.nil?
+        if response.body.encoding.name == 'ASCII-8BIT'
+          iresponse['body-bin'] = Base64.encode64(response.body)
+        else
+          iresponse['body'] = response.body
+        end
+      end
+    end
+    return iresponse
   end
 end
