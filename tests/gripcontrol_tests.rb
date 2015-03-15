@@ -54,6 +54,10 @@ class TestGripControl < Minitest::Test
     assert_equal(config['key'], Base64.decode64('geag121321='))
     config = GripControl.parse_grip_uri('http://api.fanout.io:8080/realm/realm/')
     assert_equal(config['control_uri'], 'http://api.fanout.io:8080/realm/realm')
+    uri = 'http://api.fanout.io/realm/realm?iss=realm' +
+        '&key=geag121321='
+    config = GripControl.parse_grip_uri(uri)
+    assert_equal(config['key'], 'geag121321=')
   end
 
   def test_validate_sig

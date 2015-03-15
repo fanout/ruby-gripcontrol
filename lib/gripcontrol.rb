@@ -17,7 +17,20 @@ require_relative 'websocketevent.rb'
 require_relative 'grippubcontrol.rb'
 require_relative 'response.rb'
 
+# The GripControl class provides functionality that is used in conjunction
+# with GRIP proxies. This includes facilitating the creation of hold
+# instructions for HTTP long-polling and HTTP streaming, parsing GRIP URIs
+# into config objects, validating the GRIP-SIG header coming from GRIP
+# proxies, creating GRIP channel headers, and also WebSocket-over-HTTP
+# features such as encoding/decoding web socket events and generating
+# control messages.
 class GripControl
+
+  # Create GRIP hold instructions for the specified mode, channels, response
+  # and optional timeout value. The channel parameter can be specified as
+  # either a string representing the channel name, a Channel instance or an
+  # array of Channel instances. The response parameter can be specified as
+  # either a string representing the response body or a Response instance.
   def self.create_hold(mode, channels, response, timeout=nil)
     hold = Hash.new
     hold['mode'] = mode
@@ -36,6 +49,11 @@ class GripControl
     return instruct.to_json
   end
 
+  # Parse the specified GRIP URI into a config object that can then be passed
+  # to the GripPubControl class. The URI can include 'iss' and 'key' JWT
+  # authentication query parameters as well as any other required query string
+  # parameters. The JWT 'key' query parameter can be provided as-is or in base64
+  # encoded format.
   def self.parse_grip_uri(uri)
     uri = URI(uri)
     params = {}
@@ -84,6 +102,9 @@ class GripControl
     return out
   end
 
+  # Validate the specified JWT token and key. This method is used to validate
+  # the GRIP-SIG header coming from GRIP proxies such as Pushpin or Fanout.io.
+  # Note that the token expiration is also verified.
   def self.validate_sig(token, key)
     token = token.encode('utf-8')
     begin
@@ -100,6 +121,11 @@ class GripControl
     return true
   end
 
+  # Create a GRIP channel header for the specified channels. The channels
+  # parameter can be specified as a string representing the channel name,
+  # a Channel instance, or an array of Channel instances. The returned GRIP
+  # channel header is used when sending instructions to GRIP proxies via
+  # HTTP headers.
   def self.create_grip_channel_header(channels)
     channels = parse_channels(channels)
     parts = []
@@ -113,14 +139,23 @@ class GripControl
     return parts.join(', ')
   end
 
+  # A convenience method for creating GRIP hold response instructions for HTTP
+  # long-polling. This method simply passes the specified parameters to the
+  # create_hold method with 'response' as the hold mode.
   def self.create_hold_response(channels, response=nil, timeout=nil)
     return GripControl.create_hold('response', channels, response, timeout)
   end
 
+  # A convenience method for creating GRIP hold stream instructions for HTTP
+  # streaming. This method simply passes the specified parameters to the
+  # create_hold method with 'stream' as the hold mode.
   def self.create_hold_stream(channels, response=nil)
     return create_hold('stream', channels, response)
   end
 
+  # Decode the specified HTTP request body into an array of WebSocketEvent
+  # instances when using the WebSocket-over-HTTP protocol. A RuntimeError
+  # is raised if the format is invalid.
   def self.decode_websocket_events(body)
     out = []
     start = 0
@@ -147,6 +182,9 @@ class GripControl
     return out
   end
 
+  # Encode the specified array of WebSocketEvent instances. The returned string
+  # value should then be passed to a GRIP proxy in the body of an HTTP response
+  # when using the WebSocket-over-HTTP protocol.
   def self.encode_websocket_events(events)
     out = ''
     events.each do |event|
@@ -160,6 +198,10 @@ class GripControl
     return out
   end
 
+  # Generate a WebSocket control message with the specified type and optional
+  # arguments. WebSocket control messages are passed to GRIP proxies and
+  # example usage includes subscribing/unsubscribing a WebSocket connection
+  # to/from a channel.
   def self.websocket_control_message(type, args=nil)
     if !args.nil?
       out = Marshal.load(Marshal.dump(args))
@@ -172,6 +214,9 @@ class GripControl
 
   private
 
+  # Parse the specified parameter into an array of Channel instances. The
+  # specified parameter can either be a string, a Channel instance, or
+  # an array of Channel instances.
   def self.parse_channels(channels)
     if channels.is_a?(Channel)
       channels = [channels]
@@ -182,6 +227,8 @@ class GripControl
     return channels
   end
 
+  # Get an array of hashes representing the specified channels parameter. The
+  # resulting array is used for creating GRIP proxy hold instructions.
   def self.get_hold_channels(channels)
     ichannels = []
     channels.each do |channel|
@@ -198,6 +245,8 @@ class GripControl
     return ichannels
   end
 
+  # Get a hash representing the specified response parameter. The
+  # resulting hash is used for creating GRIP proxy hold instructions.
   def self.get_hold_response(response)
     iresponse = nil
     if !response.nil?
