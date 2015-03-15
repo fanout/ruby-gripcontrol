@@ -22,7 +22,7 @@ class GripControl
     hold = Hash.new
     hold['mode'] = mode
     channels = GripControl.parse_channels(channels)
-    ichannels = GripControl.format_channels(channels)
+    ichannels = GripControl.get_hold_channels(channels)
     hold['channels'] = ichannels
     if !timeout.nil?
       hold['timeout'] = timeout
@@ -101,7 +101,7 @@ class GripControl
   end
 
   def self.create_grip_channel_header(channels)
-    channel = format_channels(channels)
+    channels = parse_channels(channels)
     parts = []
     channels.each do |channel|
       s = channel.name
@@ -178,10 +178,11 @@ class GripControl
     elsif channels.is_a?(String)
       channels = [Channel.new(channels)]
     end
+    raise 'channels.length equal to 0' unless channels.length > 0
     return channels
   end
 
-  def self.format_channels(channels)
+  def self.get_hold_channels(channels)
     ichannels = []
     channels.each do |channel|
       if channel.is_a?(String)
@@ -194,7 +195,6 @@ class GripControl
       end
       ichannels.push(ichannel)
     end
-    raise 'channels.length equal to 0' unless channels.length > 0
     return ichannels
   end
 
