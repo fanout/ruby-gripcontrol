@@ -16,12 +16,13 @@ class TestGripControl < Minitest::Test
     assert_equal(hold['hold']['channels'], [{'name' => 'channel'}])
     assert_equal(hold['response'], {'code' => 'code',
         'reason' => 'reason', 'headers' => 'headers', 'body' => 'body'})
+    # Verify non-UTF8 data passed as the body is exported as content-bin
     hold = JSON.parse(GripControl.create_hold('mode', 'channel', Response.new(
-        'code', 'reason', 'headers', 'body'.force_encoding('ASCII-8BIT'))))
+        'code', 'reason', 'headers', ["d19b86"].pack('H*'))))
     assert_equal(hold['hold']['mode'], 'mode')
     assert_equal(hold['response'], {'code' => 'code',
         'reason' => 'reason', 'headers' => 'headers', 'body-bin' =>
-        Base64.encode64('body')})
+        Base64.encode64(["d19b86"].pack('H*'))})
     hold = JSON.parse(GripControl.create_hold('mode', 'channel', nil))
     assert_equal(hold['hold']['mode'], 'mode')
     assert_equal(hold.key?('response'), false)
@@ -211,14 +212,15 @@ class TestGripControl < Minitest::Test
     assert_equal(response.key?('code'), false)
     assert_equal(response.key?('reason'), false)
     assert_equal(response.key?('headers'), false)
-    response = GripControl.get_hold_response('body'.force_encoding('ASCII-8BIT'))
-    assert_equal(response['body-bin'], Base64.encode64('body'))
+    # Verify non-UTF8 data passed as the body is exported as content-bin
+    response = GripControl.get_hold_response(["d19b86"].pack('H*'))
+    assert_equal(response['body-bin'], Base64.encode64(["d19b86"].pack('H*')))
     response = GripControl.get_hold_response(Response.new('code', 'reason',
-        {'header1' => 'val1'}, 'body'))
+        {'header1' => 'val1'}, "body\u2713"))
     assert_equal(response['code'], 'code')
     assert_equal(response['reason'], 'reason')
     assert_equal(response['headers'], {'header1' => 'val1'})
-    assert_equal(response['body'], 'body')
+    assert_equal(response['body'], "body\u2713")
     response = GripControl.get_hold_response(Response.new(nil, nil, {}, nil))
     assert_equal(response.key?('headers'), false)
     assert_equal(response.key?('body'), false)

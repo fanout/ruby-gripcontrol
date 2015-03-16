@@ -264,10 +264,10 @@ class GripControl
         iresponse['headers'] = response.headers
       end
       if !response.body.nil?
-        if response.body.encoding.name == 'ASCII-8BIT'
-          iresponse['body-bin'] = Base64.encode64(response.body)
-        else
+        if response.body.clone.force_encoding("UTF-8").valid_encoding?
           iresponse['body'] = response.body
+        else  
+          iresponse['body-bin'] = Base64.encode64(response.body)
         end
       end
     end

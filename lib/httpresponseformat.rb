@@ -45,10 +45,10 @@ class HttpResponseFormat < Format
       out['headers'] = @headers
     end
     if !@body.nil?
-      if @body.encoding.name == 'ASCII-8BIT'
-        out['body-bin'] = Base64.encode64(@body)
-      else
+      if @body.clone.force_encoding("UTF-8").valid_encoding?   
         out['body'] = @body
+      else
+        out['body-bin'] = Base64.encode64(@body)
       end
     end
     return out

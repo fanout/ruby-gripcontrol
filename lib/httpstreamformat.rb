@@ -38,10 +38,10 @@ class HttpStreamFormat < Format
     if @close
       out['action'] = 'close'
     else
-      if @content.encoding.name == 'ASCII-8BIT'
-        out['content-bin'] = Base64.encode64(@content)
-      else
+      if @content.clone.force_encoding("UTF-8").valid_encoding?
         out['content'] = @content
+      else
+        out['content-bin'] = Base64.encode64(@content)
       end
     end
     return out

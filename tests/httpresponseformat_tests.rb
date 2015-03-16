@@ -24,12 +24,13 @@ class TestHttpResponseFormat < Minitest::Test
   def test_export
     format = HttpResponseFormat.new
     assert_equal(format.export, {});
-    format = HttpResponseFormat.new('code', 'reason', 'headers', 'body')
+    format = HttpResponseFormat.new('code', 'reason', 'headers', "body\u2713")
     assert_equal(format.export, {'code' => 'code', 'reason' => 'reason',
-        'headers' => 'headers', 'body' => 'body'});
+        'headers' => 'headers', 'body' => "body\u2713"});
+    # Verify non-UTF8 data passed as the body is exported as body-bin
     format = HttpResponseFormat.new('code', 'reason', 'headers',
-        'body'.force_encoding('ASCII-8BIT'))
+        ["d19b86"].pack('H*'))
     assert_equal(format.export, {'code' => 'code', 'reason' => 'reason',
-        'headers' => 'headers', 'body-bin' => Base64.encode64('body')});
+        'headers' => 'headers', 'body-bin' => Base64.encode64(["d19b86"].pack('H*'))});
   end
 end

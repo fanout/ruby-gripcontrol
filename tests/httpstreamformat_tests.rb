@@ -27,9 +27,11 @@ class TestHttpStreamFormat < Minitest::Test
   def test_export
     format = HttpStreamFormat.new(nil, true)
     assert_equal(format.export, {'action' => 'close'});
-    format = HttpStreamFormat.new('content')
-    assert_equal(format.export, {'content' => 'content'});
-    format = HttpStreamFormat.new('content'.force_encoding('ASCII-8BIT'))
-    assert_equal(format.export, {'content-bin' => Base64.encode64('content')});
+    format = HttpStreamFormat.new("body\u2713")
+    assert_equal(format.export, {'content' => "body\u2713"});
+    # Verify non-UTF8 data passed as the body is exported as content-bin
+    format = HttpStreamFormat.new(["d19b86"].pack('H*'))
+    assert_equal(format.export, {'content-bin' => Base64.encode64(
+        ["d19b86"].pack('H*'))});
   end
 end
