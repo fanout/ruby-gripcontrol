@@ -17,7 +17,7 @@ class HttpResponseFormat < Format
   attr_accessor :body
 
   # Initialize with the message code, reason, headers, and body to send
-  # to the client when the message is publishing.
+  # to the client when the message is published.
   def initialize(code=nil, reason=nil, headers=nil, body=nil)
     @code = code
     @reason = reason
