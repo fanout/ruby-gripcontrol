@@ -3,10 +3,7 @@
 #    This module implements the GripControl class.
 #    :authors: Konstantin Bokarius.
 #    :copyright: (c) 2015 by Fanout, Inc.
-#    :license: MIT, see LICENSE for more details.
-
-require 'base64'
-require 'jwt'
+#    :license: MIT, see LICENSE for more details. require 'base64' require 'jwt'
 require 'uri'
 require 'cgi'
 require_relative 'channel.rb'
@@ -62,6 +59,8 @@ class GripControl
     end
     iss = nil
     key = nil
+    verify_iss = nil
+    verify_key = nil
     if params.key?('iss')
       iss = params['iss'][0]
       params.delete('iss')
@@ -72,6 +71,18 @@ class GripControl
     end
     if !key.nil? and key.start_with?('base64:')
       key = Base64.decode64(key[7..-1])
+    end
+    if params.key?('verify-iss')
+      verify_iss = params['verify-iss'][0]
+      params.delete('verify-iss')
+    end
+    if params.key?('verify-key')
+      verify_key = params['verify-key'][0]
+      params.delete('verify-key')
+    end
+    if !verify_key.nil? and verify_key.start_with?('base64:')
+        verify_key.gsub!(' ', '+')
+        verify_key = Base64.decode64(verify_key[7..-1])
     end
     qs = []
     params.map do |name,values|
@@ -98,6 +109,12 @@ class GripControl
     end
     if !key.nil?
       out['key'] = key
+    end
+    if !verify_iss.nil?
+      out['verify_iss'] = verify_iss
+    end
+    if !verify_key.nil?
+      out['verify_key'] = verify_key
     end
     return out
   end

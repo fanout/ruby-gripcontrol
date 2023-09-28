@@ -59,6 +59,11 @@ class TestGripControl < Minitest::Test
         '&key=geag121321='
     config = GripControl.parse_grip_uri(uri)
     assert_equal(config['key'], 'geag121321=')
+    uri = 'http://a.uri/service?' +
+      'verify-key=base64:geag121321=&verify-iss=v_iss'
+    config = GripControl.parse_grip_uri(uri)
+    assert_equal(config['verify_key'], Base64.decode64('geag121321='))
+    assert_equal(config['verify_iss'], 'v_iss')
   end
 
   def test_validate_sig
