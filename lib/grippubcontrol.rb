@@ -43,6 +43,8 @@ class GripPubControl < PubControl
       client = PubControlClient.new(entry['control_uri'])
       if entry.key?('control_iss')
         client.set_auth_jwt({'iss' => entry['control_iss']}, entry['key'])
+      elsif entry.key?('key')
+        client.set_auth_bearer(entry['key'])
       end
       super_add_client(client)
     end
